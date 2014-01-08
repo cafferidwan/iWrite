@@ -1,12 +1,18 @@
 package com.example.iwrite;
 
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.handler.timer.ITimerCallback;
+import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.IEntity;
+import org.andengine.entity.modifier.DelayModifier;
 import org.andengine.entity.modifier.LoopEntityModifier;
 import org.andengine.entity.modifier.RotationModifier;
+import org.andengine.entity.modifier.ScaleModifier;
+import org.andengine.entity.modifier.SequenceEntityModifier;
+import org.andengine.entity.modifier.IEntityModifier.IEntityModifierListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.Sprite;
@@ -18,9 +24,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.color.Color;
 import org.andengine.util.modifier.IModifier;
-
 import android.view.Display;
-import android.widget.Toast;
 
 public class MainActivity extends SimpleBaseGameActivity 
 {
@@ -46,6 +50,9 @@ public class MainActivity extends SimpleBaseGameActivity
 	public static Sprite backGround, blackBoard, moOutLine;
 	
 	public static float moOutLineX, moOutLineY;
+	
+	public static int i, j;
+	public static String DEBUG_TAG = MainActivity.class.getSimpleName();
 	
 	@Override
 	public EngineOptions onCreateEngineOptions() 
@@ -149,21 +156,60 @@ public class MainActivity extends SimpleBaseGameActivity
 				getVertexBufferObjectManager());
 		mScene.attachChild(moOutLine);
 		
-
-//		LoopEntityModifier EntityModifier =
-//                new LoopEntityModifier( new RotationModifier(8, 0, 360) );
-		
-		
-		for(int i=1; i<=7; i++)
+		for(i=1; i<=7; i++)
 		{	
-			numberSprites[i] = new NumberSprites(moOutLineX+8*i, moOutLineY+30*i-60, mTextureRegionNumber[i], getVertexBufferObjectManager());
+			numberSprites[i] = new NumberSprites(moOutLineX+8*i, moOutLineY+30*i-60, 
+				mTextureRegionNumber[i], getVertexBufferObjectManager());
+		
 			mScene.attachChild(numberSprites[i]);
 			mScene.registerTouchArea(numberSprites[i]);
-//			numberSprites[i].registerEntityModifier(EntityModifier);
 			numberSprites[i].setScale((float) 0.3);
+			numberSprites[i].setVisible(false);
+		
 		}
+		
+		MainActivity.mScene.registerUpdateHandler(new TimerHandler((float)1, new ITimerCallback() 
+		{
+			
+			@Override
+			public void onTimePassed(TimerHandler pTimerHandler) 
+			{
+				// TODO Auto-generated method stub
+				scale(1, numberSprites[1]);
+				i=1;
+			} 
+		}));
 			
 		return mScene;
 	}
+	public static void scale( int a, final Sprite sp)
+	{
+		if(a<=7)
+		{
+			sp.setVisible(true);
+			ScaleModifier scaleModifier = new ScaleModifier(1, 0.1f, 0.3f);
+			//LoopEntityModifier loopRotateMod = new LoopEntityModifier( new RotationModifier(8, 0, 360));
+			DelayModifier delayMod = new DelayModifier((float) 0.1 , new IEntityModifierListener()
+			{
 
+						@Override
+						public void onModifierStarted(IModifier<IEntity> arg0,
+								IEntity arg1) 
+						{
+							//sp.setVisible(true);
+						}
+
+						@Override
+						public void onModifierFinished(IModifier<IEntity> arg0,
+								IEntity arg1)
+						{
+							i++;
+							scale(i, numberSprites[i]);
+						}
+					});
+			
+			SequenceEntityModifier sequenceMod = new SequenceEntityModifier(scaleModifier,delayMod);
+			sp.registerEntityModifier(sequenceMod);
+		}
+	}
 }
