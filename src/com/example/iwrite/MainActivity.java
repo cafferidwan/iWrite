@@ -13,9 +13,12 @@ import org.andengine.entity.modifier.RotationModifier;
 import org.andengine.entity.modifier.ScaleModifier;
 import org.andengine.entity.modifier.SequenceEntityModifier;
 import org.andengine.entity.modifier.IEntityModifier.IEntityModifierListener;
+import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.input.touch.TouchEvent;
+import org.andengine.util.debug.Debug;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -24,9 +27,11 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.color.Color;
 import org.andengine.util.modifier.IModifier;
+
+
 import android.view.Display;
 
-public class MainActivity extends SimpleBaseGameActivity 
+public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener
 {
 
 	static int CAMERA_WIDTH;
@@ -46,6 +51,7 @@ public class MainActivity extends SimpleBaseGameActivity
 	public static BitmapTextureAtlas [] mBitmapTextureAtlasNumber = new BitmapTextureAtlas[25];
 	public static ITextureRegion [] mTextureRegionNumber = new ITextureRegion[25];
 	public static NumberSprites[] numberSprites= new NumberSprites[25];
+	public static DrawImage [] whiteChalk = new DrawImage[5000];
 	
 	public static Sprite backGround, blackBoard, moOutLine;
 	
@@ -53,6 +59,7 @@ public class MainActivity extends SimpleBaseGameActivity
 	
 	public static int i, j;
 	public static String DEBUG_TAG = MainActivity.class.getSimpleName();
+	int aCounter = 0;
 	
 	@Override
 	public EngineOptions onCreateEngineOptions() 
@@ -118,6 +125,7 @@ public class MainActivity extends SimpleBaseGameActivity
 		mBitmapTextureAtlasMoOutLine.load();
 		mBitmapTextureAtlasWhiteChalk.load();
 		mBitmapTextureAtlasStar.load();
+		mBitmapTextureAtlasWhiteChalk.load();
 		
 		//All the numbers
 		for(int i=1; i<=7; i++)
@@ -135,6 +143,7 @@ public class MainActivity extends SimpleBaseGameActivity
 		mScene = new Scene();
 		mScene.setBackground(new Background(Color.WHITE));
 	
+		mScene.setOnSceneTouchListener(this);
 		vertexBufferObjectManager = getVertexBufferObjectManager();
 
 		backGround = new Sprite(0, 0, mbackGroundTextureRegion,
@@ -158,7 +167,7 @@ public class MainActivity extends SimpleBaseGameActivity
 		
 		for(i=1; i<=7; i++)
 		{	
-			numberSprites[i] = new NumberSprites(moOutLineX+8*i, moOutLineY+30*i-60, 
+			numberSprites[i] = new NumberSprites(moOutLineX+8*i, moOutLineY+35*i-60, 
 				mTextureRegionNumber[i], getVertexBufferObjectManager());
 		
 			mScene.attachChild(numberSprites[i]);
@@ -175,41 +184,63 @@ public class MainActivity extends SimpleBaseGameActivity
 			public void onTimePassed(TimerHandler pTimerHandler) 
 			{
 				// TODO Auto-generated method stub
-				scale(1, numberSprites[1]);
+				Animation.scale(1, numberSprites[1]);
 				i=1;
+				//Animation.shake(1, numberSprites[1], 10);
 			} 
 		}));
+		
+		MainActivity.mScene.registerUpdateHandler(new TimerHandler((float)0.07, true, new ITimerCallback() 
+		{
 			
+			@Override
+			public void onTimePassed(TimerHandler pTimerHandler) 
+			{
+				// TODO Auto-generated method stub
+				if(aCounter> 135)
+				{
+					for(int k=1; k<135; k++)
+					{
+						//whiteChalk[k].setVisible(false);
+						mScene.detachChild(whiteChalk[k]);
+						aCounter=0;
+					} 
+				}
+			} 
+		}));
+		
 		return mScene;
 	}
-	public static void scale( int a, final Sprite sp)
+	
+	@Override
+	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) 
 	{
-		if(a<=7)
+		// TODO Auto-generated method stub
+		
+		if(pSceneTouchEvent.isActionDown())
 		{
-			sp.setVisible(true);
-			ScaleModifier scaleModifier = new ScaleModifier(1, 0.1f, 0.3f);
-			//LoopEntityModifier loopRotateMod = new LoopEntityModifier( new RotationModifier(8, 0, 360));
-			DelayModifier delayMod = new DelayModifier((float) 0.1 , new IEntityModifierListener()
-			{
-
-						@Override
-						public void onModifierStarted(IModifier<IEntity> arg0,
-								IEntity arg1) 
-						{
-							//sp.setVisible(true);
-						}
-
-						@Override
-						public void onModifierFinished(IModifier<IEntity> arg0,
-								IEntity arg1)
-						{
-							i++;
-							scale(i, numberSprites[i]);
-						}
-					});
-			
-			SequenceEntityModifier sequenceMod = new SequenceEntityModifier(scaleModifier,delayMod);
-			sp.registerEntityModifier(sequenceMod);
+			Debug.d("action down");
+			return true;
 		}
+		
+		if(pSceneTouchEvent.isActionMove())
+		{
+			//Debug.d("action move");
+			aCounter++;
+			whiteChalk[aCounter] = new DrawImage(pSceneTouchEvent.getX(), pSceneTouchEvent.getY(), mWhiteChalkTextureRegion, getVertexBufferObjectManager());
+			mScene.attachChild(MainActivity.whiteChalk[aCounter]);
+			//whiteChalk.setScale((float) 0.4);
+			Debug.d("I:"+aCounter);
+			
+			return true;
+		}
+		
+		if(pSceneTouchEvent.isActionUp())
+		{
+			Debug.d("action up");
+			return true;
+		}
+		
+		return true;
 	}
 }
