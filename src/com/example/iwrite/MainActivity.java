@@ -6,13 +6,6 @@ import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
-import org.andengine.entity.IEntity;
-import org.andengine.entity.modifier.DelayModifier;
-import org.andengine.entity.modifier.LoopEntityModifier;
-import org.andengine.entity.modifier.RotationModifier;
-import org.andengine.entity.modifier.ScaleModifier;
-import org.andengine.entity.modifier.SequenceEntityModifier;
-import org.andengine.entity.modifier.IEntityModifier.IEntityModifierListener;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
@@ -26,9 +19,6 @@ import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.color.Color;
-import org.andengine.util.modifier.IModifier;
-
-
 import android.view.Display;
 
 public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener
@@ -59,7 +49,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	
 	public static int i, j;
 	public static String DEBUG_TAG = MainActivity.class.getSimpleName();
-	int aCounter = 0;
+	public static int aCounter = 0, serialCounter = 1;
 	
 	@Override
 	public EngineOptions onCreateEngineOptions() 
@@ -145,6 +135,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	
 		mScene.setOnSceneTouchListener(this);
 		vertexBufferObjectManager = getVertexBufferObjectManager();
+		serialCounter = 1;
 
 		backGround = new Sprite(0, 0, mbackGroundTextureRegion,
 				getVertexBufferObjectManager());
@@ -167,7 +158,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		for(i=1; i<=7; i++)
 		{	
-			numberSprites[i] = new NumberSprites(moOutLineX+8*i, moOutLineY+35*i-60, 
+			numberSprites[i] = new NumberSprites(moOutLineX+8*i, moOutLineY+50*i-160, 
 				mTextureRegionNumber[i], getVertexBufferObjectManager());
 		
 			mScene.attachChild(numberSprites[i]);
@@ -197,15 +188,34 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			public void onTimePassed(TimerHandler pTimerHandler) 
 			{
 				// TODO Auto-generated method stub
-				if(aCounter> 135)
+				
+				if(numberSprites[serialCounter]!= null && whiteChalk[aCounter]!= null)
 				{
-					for(int k=1; k<135; k++)
-					{
-						//whiteChalk[k].setVisible(false);
-						mScene.detachChild(whiteChalk[k]);
-						aCounter=0;
-					} 
+					//Debug.d("a");
+					//Debug.d("whiteChalk[aCounter]:"+whiteChalk[aCounter].getX());
+					//Debug.d("numberSprites[serialCounter].getX():"+numberSprites[serialCounter].getX());
+				if(distance(whiteChalk[aCounter], numberSprites[serialCounter]))
+				{
+					//Debug.d("b");
+					for(int k=0; k<aCounter; k++)
+						{
+							//Debug.d("c");
+							//whiteChalk[k].setVisible(false);
+							mScene.detachChild(whiteChalk[k]);
+							//aCounter=0;
+						}
 				}
+				}
+				
+//				if(aCounter> 135)
+//				{
+//					for(int k=0; k<135; k++)
+//					{
+//						//whiteChalk[k].setVisible(false);
+//						mScene.detachChild(whiteChalk[k]);
+//						aCounter=0;
+//					} 
+//				}
 			} 
 		}));
 		
@@ -219,7 +229,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		
 		if(pSceneTouchEvent.isActionDown())
 		{
-			Debug.d("action down");
+			//Debug.d("action down");
 			return true;
 		}
 		
@@ -230,17 +240,45 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			whiteChalk[aCounter] = new DrawImage(pSceneTouchEvent.getX(), pSceneTouchEvent.getY(), mWhiteChalkTextureRegion, getVertexBufferObjectManager());
 			mScene.attachChild(MainActivity.whiteChalk[aCounter]);
 			//whiteChalk.setScale((float) 0.4);
-			Debug.d("I:"+aCounter);
+			//Debug.d("I:"+aCounter); 
+			
+			if(whiteChalk[aCounter].collidesWith(numberSprites[serialCounter]))
+			{
+				mScene.detachChild(numberSprites[serialCounter]);
+				serialCounter++;
+			}
+			
+			
+//			for(int b=1; b<=7; b++)
+//			{
+//				if(numberSprites[b].collidesWith(whiteChalk[aCounter]))
+//				{
+//					mScene.detachChild(numberSprites[b]);
+//					Debug.d("collided:"+b);
+//				}
+//			}
 			
 			return true;
 		}
 		
 		if(pSceneTouchEvent.isActionUp())
 		{
-			Debug.d("action up");
+			//Debug.d("action up");
 			return true;
 		}
 		
 		return true;
+	}
+	
+	public static boolean distance(Sprite a , Sprite b)
+	{
+		double dist = Math.sqrt(Math.pow((b.getX() - a.getX()), 2) + Math.pow((b.getY() - a.getY()), 2));
+		
+		if(dist>200)
+		{
+			return true;
+		}
+		else
+			return false;
 	}
 }
